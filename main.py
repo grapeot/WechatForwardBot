@@ -22,8 +22,7 @@ plugins = [
     HistoryRecorder(),
     GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
     ActivityInfo('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
-    GroupMessageForwarder([ '一群', '二群' ], [ '【科大校友AI&amp;Deep-Learning群】', '科大AI二群测试中' ], False),
-    GroupMessageForwarder([ '二群', '三群' ], [ '科大AI二群测试中', '科大AI三群供测试' ])
+    GroupMessageForwarder([ 'Group1', 'Group2' ], [ 'ActualGroupName1', 'ActualGroupName2' ])
 ]
 for plugin in plugins:
     if not isinstance(plugin, ProcessInterface):
