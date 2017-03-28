@@ -1,1 +1,6 @@
 itchat
+pymongo
+jieba
+wordcloud
+numpy
+matplotlib

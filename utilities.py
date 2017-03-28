@@ -4,6 +4,10 @@ Some utility functions
 """
 import logging
 
+# Some global configuration
+dbName = 'WechatHistory'
+collName = 'history'
+
 class NickNameLookup:
     def __init__(self, chatrooms):
         self.dict = {}
