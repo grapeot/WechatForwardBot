@@ -52,9 +52,9 @@ class GroupTagCloud(ProcessInterface):
     def isRun(self, msg, type):
         if type != TEXT or 'Content' not in msg:
             return { 'shallRun': False }
-        if msg['Content'] == '/tagcloud':
+        if re.search(r'^\s*/tagcloud$', msg['Content']):
             return { 'shallRun': True, 'userName': None, 'groupName': msg['User']['NickName'] }
-        if msg['Content'] == '/mytag':
+        if re.search(r'^\s*/mytag$', msg['Content']):
             return { 'shallRun': True, 'userName': msg['ActualNickName'], 'groupName': msg['User']['NickName'] }
         return { 'shallRun': False }
 

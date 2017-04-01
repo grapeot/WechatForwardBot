@@ -4,6 +4,7 @@ from itchat.content import *
 from utilities import *
 from sys import argv, exit
 from GlobalTextHook import GlobalTextHook
+from PaiDuiHook import PaiDuiHook
 from HistoryRecorder import HistoryRecorder
 from GroupTagCloud import GroupTagCloud
 from GroupMessageForwarder import GroupMessageForwarder
@@ -18,11 +19,13 @@ isDebug = not True
 # Component initialization
 itchat.auto_login(True)
 plugins = [
-    GlobalTextHook({ '^ding$': 'dong', '鸭哥': '嘎？' }),
+    GlobalTextHook({ '^ding$': 'dong', '鸭哥': '嘎？' }, [ '知乎秋名山三年二班', '知乎最牛逼兄弟会没有之一' ]),
+    PaiDuiHook(),
     HistoryRecorder(),
     GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
     ActivityInfo('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
-    GroupMessageForwarder([ 'Group1', 'Group2' ], [ 'ActualGroupName1', 'ActualGroupName2' ])
+    GroupMessageForwarder([ '一群', '二群' ], [ '【科大校友AI&amp;Deep-Learning群】', '科大AI二群测试中' ], False),
+    GroupMessageForwarder([ '二群', '三群' ], [ '科大AI二群测试中', '科大AI三群供测试' ])
 ]
 for plugin in plugins:
     if not isinstance(plugin, ProcessInterface):
@@ -35,21 +38,30 @@ def picture_reply(msg):
     if isDebug:
         logging.info(msg)
     for plugin in plugins:
-        plugin.process(msg, PICTURE)
+        try:
+            plugin.process(msg, PICTURE)
+        except:
+            pass  # so that one plug's failure won't prevent others from being executed 
 
 @itchat.msg_register([SHARING], isGroupChat=True)
 def sharing_reply(msg):
     if isDebug:
         logging.info(msg)
     for plugin in plugins:
-        plugin.process(msg, SHARING)
+        try:
+            plugin.process(msg, PICTURE)
+        except:
+            pass  # so that one plug's failure won't prevent others from being executed 
 
 @itchat.msg_register([TEXT], isGroupChat=True)
 def text_reply(msg):
     if isDebug:
         logging.info(msg)
     for plugin in plugins:
-        plugin.process(msg, TEXT)
+        try:
+            plugin.process(msg, PICTURE)
+        except:
+            pass  # so that one plug's failure won't prevent others from being executed 
 
 if __name__ == '__main__':
     itchat.run()

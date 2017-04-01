@@ -21,6 +21,9 @@ class GroupMessageForwarder(ProcessInterface):
         self.isInitialized = True
 
     def process(self, msg, type):
+        if not self.isInitialized:
+            logging.error('The forwarder was not properly initialized. Please send a message in the groups you want to connect and try again.')
+            return
         shallSendObj = self.shallSend(msg)
         if not shallSendObj['shallSend']:
             return
