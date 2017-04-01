@@ -20,6 +20,7 @@ import logging
 
 class ActivityInfo(ProcessInterface):
     timestampSubtract = 3600 * 24  # 1 day
+    maxActivityInfoCount = 10
     imgDir = 'activityInfo'
 
     def __init__(self, fontPath):
@@ -53,22 +54,27 @@ class ActivityInfo(ProcessInterface):
         ax = pp.subplot(2, 1, 1)
         pp.plot_date(datex, hist, '.-')
         pp.gcf().autofmt_xdate()
-        pp.xlabel('美国西部时间', fontproperties=self.prop)
-        pp.ylabel('每小时消息数', fontproperties=self.prop)
+        pp.xlabel(u'美国西部时间', fontproperties=self.prop)
+        pp.ylabel(u'每小时消息数', fontproperties=self.prop)
         ax.xaxis.set_major_formatter(DateFormatter('%m-%d %H:%M'))
-        # Get pie chart for active users
+        # Get bar chart for active users
         pieDat = Counter([ x['from'] for x in records ])
-        others = 0
-        allCount = len(records)
-        pieDat2 = {}
-        for name in pieDat:
-            if pieDat[name] / allCount < 0.02:
-                others += pieDat[name]
-            else:
-                pieDat2[name] = pieDat[name]
-        pieDat2['其他'] = others
-        pp.subplot(2, 1, 2)
-        pp.pie(list(pieDat2.values()), labels=list(pieDat2.keys()), shadow=True, textprops={'fontproperties': self.prop})
+        pieDatSorted = sorted([ (k, pieDat[k]) for k in pieDat ],key=lambda x: x[1], reverse=True)
+        if len(pieDatSorted) > self.maxActivityInfoCount:
+            pieDatSorted = pieDatSorted[:self.maxActivityInfoCount]
+        ax = pp.subplot(2, 1, 2)
+        width = 0.7
+        x = np.arange(len(pieDatSorted)) + width
+        xText = [ xx[0] for xx in pieDatSorted ]
+        y = [ xx[1] for xx in pieDatSorted ]
+        pp.bar(x, y, width)
+        a = pp.gca()
+        a.set_xticklabels(a.get_xticks(), { 'fontProperties': self.prop })
+        pp.xticks(x, xText, rotation='vertical')
+        pp.xlabel(u'用户', fontproperties=self.prop)
+        pp.ylabel(u'24小时消息数', fontproperties=self.prop)
+        ax.set_xlim([ 0, len(xText) + 1 - width ])
+        pp.margins(0.2)
         pp.savefig(fn)
         return fn
 

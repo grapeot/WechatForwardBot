@@ -15,6 +15,7 @@ import jieba
 
 class GroupTagCloud(ProcessInterface):
     recordMaxNum = 500
+    maxFrequency = 40
     imgDir = 'TagCloud'
 
     def __init__(self, fontPath):
@@ -44,6 +45,7 @@ class GroupTagCloud(ProcessInterface):
             records = self.coll.find({ 'from': userName, 'to': groupName }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum)
         texts = [ r['content'] for r in records ]
         frequencies = Counter([ w for text in texts for w in jieba.cut(text, cut_all=False) if len(w) > 1 ])
+        frequencies = { k: max(self.maxFrequency, frequencies[k]) for k in frequencies }
         img = self.wordCloud.generate_from_frequencies(frequencies).to_image()
         fn = self.generateTmpFileName()
         img.save(fn)

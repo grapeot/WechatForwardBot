@@ -19,13 +19,12 @@ isDebug = not True
 # Component initialization
 itchat.auto_login(True)
 plugins = [
-    GlobalTextHook({ '^ding$': 'dong', '鸭哥': '嘎？' }, [ '知乎秋名山三年二班', '知乎最牛逼兄弟会没有之一' ]),
+    GlobalTextHook({ '^ding$': 'dong', '鸭哥': '嘎？' }),
     PaiDuiHook(),
     HistoryRecorder(),
     GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
     ActivityInfo('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
-    GroupMessageForwarder([ '一群', '二群' ], [ '【科大校友AI&amp;Deep-Learning群】', '科大AI二群测试中' ], False),
-    GroupMessageForwarder([ '二群', '三群' ], [ '科大AI二群测试中', '科大AI三群供测试' ])
+    GroupMessageForwarder([ '二群', '三群' ], [ 'AI二群测试中', 'AI三群测试' ])
 ]
 for plugin in plugins:
     if not isinstance(plugin, ProcessInterface):
@@ -40,8 +39,8 @@ def picture_reply(msg):
     for plugin in plugins:
         try:
             plugin.process(msg, PICTURE)
-        except:
-            pass  # so that one plug's failure won't prevent others from being executed 
+        except Exception as e:
+            logging.error(e) # so that one plug's failure won't prevent others from being executed 
 
 @itchat.msg_register([SHARING], isGroupChat=True)
 def sharing_reply(msg):
@@ -49,9 +48,9 @@ def sharing_reply(msg):
         logging.info(msg)
     for plugin in plugins:
         try:
-            plugin.process(msg, PICTURE)
-        except:
-            pass  # so that one plug's failure won't prevent others from being executed 
+            plugin.process(msg, SHARING)
+        except Exception as e:
+            logging.error(e) # so that one plug's failure won't prevent others from being executed 
 
 @itchat.msg_register([TEXT], isGroupChat=True)
 def text_reply(msg):
@@ -59,9 +58,9 @@ def text_reply(msg):
         logging.info(msg)
     for plugin in plugins:
         try:
-            plugin.process(msg, PICTURE)
-        except:
-            pass  # so that one plug's failure won't prevent others from being executed 
+            plugin.process(msg, TEXT)
+        except Exception as e:
+            logging.error(e) # so that one plug's failure won't prevent others from being executed 
 
 if __name__ == '__main__':
     itchat.run()

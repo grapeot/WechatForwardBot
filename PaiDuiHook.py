@@ -5,11 +5,15 @@ import re
 import logging
 
 class PaiDuiHook(ProcessInterface):
-    groupContentCacheMaxCapacity = 10
+    groupContentCacheMaxCapacity = 5
+    maxSelfPaiDuiTTL = 15
 
     def __init__(self, blacklist=[]):
         self.blacklist = blacklist
         self.groupLastMsgsDict = {}
+        # A dictionary controlling not pai dui for more than one time
+        # Key: (groupName, content), Value: TTL (0 or non-exist means OK to paidui)
+        self.selfPaiDuiTTL = {}   
         logging.info('PaiduiHook initialized.')
 
     def WhatToPaiDui(self, groupName):
@@ -19,16 +23,17 @@ class PaiDuiHook(ProcessInterface):
             if msg['Content'] not in msgCount:
                 msgCount[msg['Content']] = 0
             msgCount[msg['Content']] += 1
-            if msg['FromSelf']:
-                # if we replied this before, we will effectively remove it from the group content cache
-                msgCount[msg['Content']] -= self.groupContentCacheMaxCapacity
         contentToPaiDui = [ x for x in msgCount if msgCount[x] > 1 ]
-        if len(contentToPaiDui) > 1:
-            logging.error('Something is wrong, len(contentToPaiDui) > 1.')
         if len(contentToPaiDui) == 0:
-            return None
-        else:
-            return contentToPaiDui[0]
+            # No dui to pai
+            return
+        # it's possible that two duis are formed at the same time, but only one can pass the TTL check
+        for content in contentToPaiDui:
+            if (groupName, content) not in self.selfPaiDuiTTL or self.selfPaiDuiTTL == 0:
+                self.selfPaiDuiTTL[(groupName, content)] = self.maxSelfPaiDuiTTL
+                yield content  # We use yield here because we still need to conitnue managing the TTL
+            else:
+                self.selfPaiDuiTTL[(groupName, content)] -= 1
 
     def isFromSelf(self, msg):
         if re.search('^@@', msg['ToUserName']):
@@ -41,7 +46,7 @@ class PaiDuiHook(ProcessInterface):
             self.groupLastMsgsDict[groupName] = []
         if len(self.groupLastMsgsDict[groupName]) >= self.groupContentCacheMaxCapacity:
             self.groupLastMsgsDict[groupName].pop(0)
-        self.groupLastMsgsDict[groupName].append({ 'Content': msg['Content'], 'FromSelf': 'FromSelf' in msg and msg['FromSelf'] })
+        self.groupLastMsgsDict[groupName].append({ 'Content': msg['Content'] })
 
     def process(self, msg, type):
         if type != TEXT:
@@ -56,8 +61,10 @@ class PaiDuiHook(ProcessInterface):
             return
 
         self.updateGroupContentCache(msg, groupName)
-        contentToPaiDui = self.WhatToPaiDui(groupName)
-        if contentToPaiDui is not None:
+        contentToPaiDui = list(self.WhatToPaiDui(groupName))
+        if len(contentToPaiDui) > 1:
+            logging.error('Multiple duis detected.')
+        if len(contentToPaiDui) != 0:
             # Pai dui!
             itchat.send(msg['Content'], msg['FromUserName'])
             logging.info('Pai Dui! {0}.'.format(msg['Content']))
