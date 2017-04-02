@@ -1,4 +1,5 @@
 from time import time
+from datetime import datetime
 from pymongo import MongoClient
 from ProcessInterface import ProcessInterface
 from utilities import *
@@ -15,11 +16,14 @@ class HistoryRecorder(ProcessInterface):
     def process(self, msg, type):
         if type != TEXT:
             return
+        timestamp = time()
+        rtime = datetime.utcfromtimestamp(timestamp)
         r = {
             'content': msg['Content'],
             'from': msg['ActualNickName'],
             'fromId': msg['ToUserName'],
             'to': msg['User']['NickName'] if 'User' in msg and 'UserName' in msg['User'] else 'N/A',
-            'timestamp': time()
+            'timestamp': timestamp,
+            'time': rtime
             }
         self.coll.insert(r)
