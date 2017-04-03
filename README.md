@@ -7,6 +7,7 @@
 * 响应/tagcloud，生成整个群的标签云，或者响应/mytag，生成某个用户的标签云。
 * 响应/activity，生成群的活跃度时间图，以及活跃用户饼图。
 * 自动排队。如果群里出现了二传，自动三传。
+* 兼容Windows和Linux。如果在Windows下运行，请更改字体路径。
 
 目前不支持的功能：
 
@@ -16,15 +17,17 @@
 
 ## 部署
 
-* 运行`deploy.sh`。
-* 依赖于[itchat](https://itchat.readthedocs.io/zh/latest/)
+* 运行`deploy.sh`。或者手工安装python，mongodb，然后安装`requirements.txt`中的库。
+* 依赖于[itchat](https://itchat.readthedocs.io/zh/latest/), [mongodb](https://docs.mongodb.com/manual/administration/install-community/).
 
 ## 运行
 
-* 这个小工具不是针对最终用户的，所以现在需要改code（main.py）来设置想要转发的群名。
+* 这个小工具不是针对最终用户的，所以现在需要改code（`main.py`）来设置想要转发的群名。
 * `python3 -u main.py`。会弹出一个二维码扫码登录。
 * 如果在Linux VPS上运行，ssh进去的时候记得加上X转发，这样才能看到二维码。如果不用X转发的话也可以手工下载文件或者改用命令行二维码。
 
 ## 已知问题
 
 * 如果启动时候说无法找到群，请在群里说句话。这是微信接口的限制所致。
+* 如果启动的时候说连接27017端口connection refused，这是因为你没有安装mongodb。安装mongodb可以解决这个问题。
+* 如果出来的标签云里面都是框框，这是字体没有配置好所致。请去`main.py`里面更改字体路径。
