@@ -12,17 +12,23 @@ import random
 import time
 import logging
 import jieba
+import numpy as np
+from PIL import Image
 
 class GroupTagCloud(ProcessInterface):
     recordMaxNum = 500
     maxFrequency = 40
     imgDir = 'TagCloud'
 
-    def __init__(self, fontPath):
+    def __init__(self, fontPath, maskPath = None):
         self.client = MongoClient()
         self.coll = self.client[dbName][collName]
         self.fontPath = fontPath
-        self.wordCloud = WordCloud(font_path=self.fontPath, width=400, height=400, max_words=100)
+        if maskPath is None:
+            self.wordCloud = WordCloud(font_path=self.fontPath, width=400, height=400, max_words=100)
+        else:
+            self.mask = np.array(Image.open(maskPath))
+            self.wordCloud = WordCloud(font_path=self.fontPath, mask=self.mask, max_words=100)
         if not os.path.exists(self.imgDir):
             os.mkdir(self.imgDir)
         logging.info('GroupTagCloud connected to MongoDB.')
