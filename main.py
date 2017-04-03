@@ -22,7 +22,7 @@ plugins = [
     GlobalTextHook({ '^ding$': 'dong', '鸭哥': '嘎？' }),
     PaiDuiHook(),
     HistoryRecorder(),
-    GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
+    GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc','girl.png'),
     ActivityInfo('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
     GroupMessageForwarder([ '二群', '三群' ], [ 'AI二群测试中', 'AI三群测试' ])
 ]
