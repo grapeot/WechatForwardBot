@@ -5,6 +5,8 @@ from collections import Counter
 from pymongo import MongoClient, DESCENDING
 from wordcloud import WordCloud
 from ProcessInterface import ProcessInterface
+import itertools
+import gensim
 import os
 import itchat
 import re
@@ -31,12 +33,38 @@ class GroupTagCloud(ProcessInterface):
         shallRunObj = self.isRun(msg, type)
         if shallRunObj['shallRun']:
             logging.info('Generating tag cloud for {0}.'.format(shallRunObj['groupName']))
-            fn = self.generateTagCloudForGroup(shallRunObj['groupName'], shallRunObj['userName'])
+            fn = self.generateTagCloudForGroupV2(shallRunObj['groupName'], shallRunObj['userName'])
             destinationChatroomId = msg['FromUserName'] if re.search('@@', msg['FromUserName']) else msg['ToUserName']
             logging.info('Sending tag cloud file {0} to {1}.'.format(fn, destinationChatroomId))
             itchat.send('@img@{0}'.format(fn), destinationChatroomId)
 
-    # Generate a tag cloud image from the latest self.recordMaxNum images. Return the file name.
+    # Generate a tag cloud image from the latest self.recordMaxNum records, based on TF-IDF. Return the file name.
+    def generateTagCloudForGroupV2(self, groupName, userName=None):
+        records = None
+        if userName is None:
+            records = self.coll.find({ 'to': groupName }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum)
+            docThisGroup = list(jieba.cut(' '.join([ r['content'] for r in records])))
+            allRecords = self.coll.find({ 'to': { '$ne': groupName } }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum * 5)
+            allRecordsGroup = sorted(allRecords, key=lambda x: x['to'])
+            allRecordsGroup = itertools.groupby(allRecordsGroup, lambda x: x['to'])
+            docsOtherGroups = [ list(jieba.cut(' '.join([x['content'] for x in list(g)]))) for k, g in allRecordsGroup ]
+            docs = [ docThisGroup ] + docsOtherGroups
+            dictionary = gensim.corpora.Dictionary(docs)
+            docs = [ dictionary.doc2bow(doc) for doc in docs ]
+            id2token = { v: k for k, v in dictionary.token2id.items() }
+            tfidf = gensim.models.tfidfmodel.TfidfModel(corpus=docs)
+            tagCloudFrequencies = { id2token[x[0]]: x[1] for x in tfidf[docs[0]] }
+        else:
+            records = self.coll.find({ 'from': userName, 'to': groupName }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum)
+            texts = [ r['content'] for r in records ]
+            frequencies = Counter([ w for text in texts for w in jieba.cut(text, cut_all=False) if len(w) > 1 ])
+            tagCloudFrequencies = { k: min(self.maxFrequency, frequencies[k]) for k in frequencies }
+        img = self.wordCloud.generate_from_frequencies(tagCloudFrequencies).to_image()
+        fn = self.generateTmpFileName()
+        img.save(fn)
+        return fn
+
+    # Generate a tag cloud image from the latest self.recordMaxNum messages. Return the file name.
     def generateTagCloudForGroup(self, groupName, userName=None):
         records = None
         if userName is None:
@@ -65,4 +93,4 @@ class GroupTagCloud(ProcessInterface):
 
 if __name__ == '__main__':
     groupTagCloud = GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
-    groupTagCloud.generateTagCloudForGroup('TestGroup')
+    groupTagCloud.generateTagCloudForGroupV2('知乎万粉俱乐部')
