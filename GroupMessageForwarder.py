@@ -2,6 +2,7 @@
 from utilities import *
 from itchat.content import *
 from ProcessInterface import ProcessInterface
+import os
 import itchat
 
 class GroupMessageForwarder(ProcessInterface):
@@ -17,6 +18,9 @@ class GroupMessageForwarder(ProcessInterface):
             return
         self.chatroomIds = [ x['UserName'] for x in self.chatroomObjs ]
         self.nickNameLookup = NickNameLookup(self.chatroomObjs)
+        self.fileFolder = 'ForwarderFiles'
+        if not os.path.exists(self.fileFolder):
+            os.mkdir(self.fileFolder)
         logging.info('Fetched user ids for the chatrooms {0}.'.format(chatroomNames))
         self.isInitialized = True
 
@@ -34,7 +38,10 @@ class GroupMessageForwarder(ProcessInterface):
             logging.info(content)
             itchat.send(content, destinationChatroomId)
         elif type == PICTURE:
-            msg['Text'](msg['FileName'])
+            fn = msg['FileName']
+            newfn = os.path.join(self.fileFolder, fn)
+            msg['Text'](fn)
+            os.rename(fn, newfn)
             type = {'Picture': 'img', 'Video': 'vid'}.get(msg['Type'], 'fil')
             typeText = {'Picture': '图片', 'Video': '视频'}.get(msg['Type'], '文件')
             fromText = '[{0}]'.format(self.chatroomDisplayNames[shallSendObj['fromChatroom']])
@@ -42,7 +49,7 @@ class GroupMessageForwarder(ProcessInterface):
             content = '{0} {1} 发送了{2}:'.format(fromText, self.nickNameLookup.lookupNickName(msg), typeText)
             itchat.send(content, destinationChatroomId)
             logging.info(content)
-            itchat.send('@{0}@{1}'.format(type, msg['FileName']), destinationChatroomId)
+            itchat.send('@{0}@{1}'.format(type, newfn), destinationChatroomId)
         elif type == SHARING:
             fromText = '[{0}]'.format(self.chatroomDisplayNames[shallSendObj['fromChatroom']])
             destinationChatroomId = self.chatroomIds[not shallSendObj['fromChatroom']]

@@ -32,7 +32,10 @@ class GroupTagCloud(ProcessInterface):
     def process(self, msg, type):
         shallRunObj = self.isRun(msg, type)
         if shallRunObj['shallRun']:
-            logging.info('Generating tag cloud for {0}.'.format(shallRunObj['groupName']))
+            toLog = 'Generating tag cloud for {0}.'.format(shallRunObj['groupName'])
+            if shallRunObj['userName']:
+                toLog = '{0} Username {1}.'.format(toLog, shallRunObj['userName'])
+            logging.info(toLog)
             fn = self.generateTagCloudForGroupV2(shallRunObj['groupName'], shallRunObj['userName'])
             destinationChatroomId = msg['FromUserName'] if re.search('@@', msg['FromUserName']) else msg['ToUserName']
             logging.info('Sending tag cloud file {0} to {1}.'.format(fn, destinationChatroomId))
@@ -43,22 +46,22 @@ class GroupTagCloud(ProcessInterface):
         records = None
         if userName is None:
             records = self.coll.find({ 'to': groupName }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum)
-            docThisGroup = list(jieba.cut(' '.join([ r['content'] for r in records])))
             allRecords = self.coll.find({ 'to': { '$ne': groupName } }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum * 5)
             allRecordsGroup = sorted(allRecords, key=lambda x: x['to'])
-            allRecordsGroup = itertools.groupby(allRecordsGroup, lambda x: x['to'])
-            docsOtherGroups = [ list(jieba.cut(' '.join([x['content'] for x in list(g)]))) for k, g in allRecordsGroup ]
-            docs = [ docThisGroup ] + docsOtherGroups
-            dictionary = gensim.corpora.Dictionary(docs)
-            docs = [ dictionary.doc2bow(doc) for doc in docs ]
-            id2token = { v: k for k, v in dictionary.token2id.items() }
-            tfidf = gensim.models.tfidfmodel.TfidfModel(corpus=docs)
-            tagCloudFrequencies = { id2token[x[0]]: x[1] for x in tfidf[docs[0]] }
         else:
             records = self.coll.find({ 'from': userName, 'to': groupName }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum)
-            texts = [ r['content'] for r in records ]
-            frequencies = Counter([ w for text in texts for w in jieba.cut(text, cut_all=False) if len(w) > 1 ])
-            tagCloudFrequencies = { k: min(self.maxFrequency, frequencies[k]) for k in frequencies }
+            allRecords = self.coll.find({ 'from': { '$ne': userName }, 'to': groupName }).sort([ ('timestamp', DESCENDING) ]).limit(self.recordMaxNum * 5)
+            allRecordsGroup = sorted(allRecords, key=lambda x: x['from'])
+        docThisGroup = list(jieba.cut(' '.join([ r['content'] for r in records if re.match('<<<IMG', r['content']) is None])))  # remove the image records
+        allRecordsGroup = itertools.groupby(allRecordsGroup, lambda x: x['to'])
+        docsOtherGroups = [ list(jieba.cut(' '.join([x['content'] for x in list(g) if re.match('<<<IMG', x['content']) is None]))) for k, g in allRecordsGroup ]
+        docs = [ docThisGroup ] + docsOtherGroups
+        dictionary = gensim.corpora.Dictionary(docs)
+        docs = [ dictionary.doc2bow(doc) for doc in docs ]
+        id2token = { v: k for k, v in dictionary.token2id.items() }
+        tfidf = gensim.models.tfidfmodel.TfidfModel(corpus=docs)
+        tagCloudFrequencies = { id2token[x[0]]: x[1] for x in tfidf[docs[0]] }
+
         img = self.wordCloud.generate_from_frequencies(tagCloudFrequencies).to_image()
         fn = self.generateTmpFileName()
         img.save(fn)
@@ -93,4 +96,5 @@ class GroupTagCloud(ProcessInterface):
 
 if __name__ == '__main__':
     groupTagCloud = GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
-    groupTagCloud.generateTagCloudForGroupV2('知乎万粉俱乐部')
+    groupTagCloud.generateTagCloudForGroup('知乎万粉俱乐部', '鸭哥')
+    groupTagCloud.generateTagCloudForGroupV2('知乎万粉俱乐部', '鸭哥')
