@@ -2,11 +2,14 @@
 """
 Some utility functions
 """
+from pymongo import MongoClient
 import logging
 
 # Some global configuration
 dbName = 'WechatHistory'
 collName = 'history'
+gaCollName = 'GaNum'
+client = MongoClient('localhost', 27017)
 
 class NickNameLookup:
     def __init__(self, chatrooms):

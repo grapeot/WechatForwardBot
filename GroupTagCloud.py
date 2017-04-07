@@ -96,5 +96,5 @@ class GroupTagCloud(ProcessInterface):
 
 if __name__ == '__main__':
     groupTagCloud = GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
-    groupTagCloud.generateTagCloudForGroup('知乎万粉俱乐部', '鸭哥')
-    groupTagCloud.generateTagCloudForGroupV2('知乎万粉俱乐部', '鸭哥')
+    groupTagCloud.generateTagCloudForGroup(''TestGroup', '鸭哥')
+    groupTagCloud.generateTagCloudForGroupV2('TestGroup', '鸭哥')

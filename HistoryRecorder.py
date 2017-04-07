@@ -1,6 +1,5 @@
 from time import time
 from datetime import datetime
-from pymongo import MongoClient
 from ProcessInterface import ProcessInterface
 from utilities import *
 from itchat.content import *
@@ -8,7 +7,7 @@ import os
 
 class HistoryRecorder(ProcessInterface):
     def __init__(self):
-        self.client = MongoClient()
+        self.client = client
         self.coll = self.client[dbName][collName]
         self.imgFolder = 'HistoryImages'
         if not os.path.exists(self.imgFolder):

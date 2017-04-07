@@ -2,7 +2,7 @@
 from utilities import *
 from itchat.content import *
 from ProcessInterface import ProcessInterface
-from pymongo import MongoClient, DESCENDING
+from pymongo import DESCENDING
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as pp
@@ -26,7 +26,7 @@ class ActivityInfo(ProcessInterface):
     def __init__(self, fontPath):
         if not os.path.exists(self.imgDir):
             os.mkdir(self.imgDir)
-        self.client = MongoClient()
+        self.client = client
         self.coll = self.client[dbName][collName]
         self.prop = FontProperties(fname=fontPath)
         logging.info('ActivityInfo initialized.')
@@ -83,4 +83,4 @@ class ActivityInfo(ProcessInterface):
 
 if __name__ == '__main__':
     ai = ActivityInfo('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
-    ai.generateActivityInfoForGroup('💦人美三观正之嘴炮无下限')
+    ai.generateActivityInfoForGroup('TestGroup')

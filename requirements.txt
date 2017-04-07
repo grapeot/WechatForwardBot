@@ -4,3 +4,4 @@ jieba
 wordcloud
 numpy
 matplotlib
+gensim
