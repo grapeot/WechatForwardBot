@@ -30,7 +30,7 @@ plugins = [
     GaTextHook(),
     PaiDuiHook(),
     HistoryRecorder(),
-    GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
+    GroupTagCloud('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc','girl.png'),
     ActivityInfo('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
     GroupMessageForwarder([ '二群', '三群' ], [ '科大AI二群测试中', '科大AI三群供测试' ]),
     #DoutuProcessor('./DoutuFeatures.txt')  # Uncomment to enable Dou Tu
