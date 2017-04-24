@@ -1,14 +1,17 @@
 import numpy as np
 import os, sys, getopt
+import hashlib
 
 # Main path to your caffe installation
 caffe_root = './caffe/'
 
 # Model prototxt file
-model_prototxt = caffe_root + 'models/bvlc_googlenet/deploy.prototxt'
+model_prototxt = caffe_root + 'models/bvlc_reference_caffenet/deploy.prototxt'
+#model_prototxt = caffe_root + 'models/bvlc_googlenet/deploy.prototxt'
 
 # Model caffemodel file
-model_trained = caffe_root + 'models/bvlc_googlenet/bvlc_googlenet.caffemodel'
+model_trained = caffe_root + 'models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel'
+#model_trained = caffe_root + 'models/bvlc_googlenet/bvlc_googlenet.caffemodel'
 
 # File containing the class labels
 imagenet_labels = caffe_root + 'data/ilsvrc12/synset_words.txt'
@@ -17,7 +20,8 @@ imagenet_labels = caffe_root + 'data/ilsvrc12/synset_words.txt'
 mean_path = caffe_root + 'python/caffe/imagenet/ilsvrc_2012_mean.npy'
 
 # Name of the layer we want to extract
-layer_name = 'pool5/7x7_s1'
+#layer_name = 'pool5/7x7_s1'
+layer_name = 'fc8'
 
 sys.path.insert(0, caffe_root + 'python')
 import caffe
@@ -69,12 +73,14 @@ def main(argv):
             for image_path in reader:
                 try:
                     image_path = image_path.strip()
+                    with open(image_path, 'rb') as fp:
+                        cachekey = hashlib.sha224(fp.read()).hexdigest()
                     input_image = caffe.io.load_image(image_path)
                     prediction = net.predict([input_image], oversample=False)
                     print(os.path.basename(image_path), ' : ' , labels[prediction[0].argmax()].strip() , ' (', prediction[0][prediction[0].argmax()] , ')')
                     feature = net.blobs[layer_name].data[0].reshape(1,-1)
                     featureTxt = ' '.join([ str(x) for x in feature.tolist()[0] ])
-                    writer.write('{0}\t{1}\n'.format(image_path, featureTxt))
+                    writer.write('{0}\t{1}\t{2}\n'.format(image_path, cachekey, featureTxt))
                 except Exception as e:
                     print(e)
                     print('ERROR: skip {0}.'.format(image_path))
